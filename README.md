@@ -15,7 +15,7 @@ The least headaches way to run the script is to prepare an ARGS file and an INPU
 ARGS file contains the parameters of the analysis (i.e. the type of conservation measure, the path to the input file, etc.). More details will come later.
 INPUT file has the path to each multiple sequence alignment and a tag to identify the type of MSA. Again, more details later.
 
-## Test run:
+## Test run
 > cd src
 > python3 dirpred.py @../testargs/testARGS_egfDIRpred_MIblos4444.arg
 
@@ -43,6 +43,38 @@ This file contains several info for each reference position. In order of columns
 Same as previous file, but sorted by the 11th column, the final DIRpred score.
 
 - **ligand_table.csv** 
-This file shows how the positions of paralogs align relatively to the reference. When multiple positions are shown to correspond to one reference position, then the aligned position is the last of the array, with all the previous listed position being an unalignable insertion. The only exception is to the last reference position. In that match, the first of the array is the aligning position while the rest are a trailing insertion.
+This file shows how the positions of paralogs align relatively to the reference for both MSA and MSTA alignments.  
+When multiple positions are shown to correspond to one reference position, the aligned position is the last of the list, with all the previously listed positions being an insertion. Only exception to this is if the reference position is the last. In that case, the matching residue is the first of the array, while the rest are a trailing insertion.
 This file also contains the individual conservation scores of the aligning positions.
 
+- **plots/** 
+This folder contains several DIRpred score plots, and the individual score distributions
+
+- **coevolution/** 
+This folder contains the partial results of the co-evolution analysis.
+
+## Input file
+The input file is a tab separated list of inputs, with the following columns
+1. type: can be LIGAND, MSTA, MSA, RECEPTOR
+2. path: the PATH to the file
+3. name: the NAME of LIGAND
+4. pdb: the PDB ID of LIGAND
+
+An example can be found in testdata/input_files
+
+## ARGS file
+The ARGS file contains in a cleaner way the arguments required when calling the python script. Remember to use the @ symbol in front of the path to indicate that the file contains the arguments of the script. An example arg file is found in testargs/testARGS_egfDIRpred_MIblos4444.arg
+A list of the required and optional parameters is found just after this text. What are you waiting for, go and read!
+
+## Parameters list and description
+
+| Param | Description| Required | Default | Example |
+|:-----:|:----------:|:--------:|:-------:|:-------:|
+|--input-file|File containing the multiple MSA and labels|yes|-|--input-file testdata/input_files/egf_inputfile.txt|
+|--output-path|Path to the output folder, created if non-existant|yes|-|--output-path ./test_out/|
+|--test-type|Type of test, for this version only DIRP|no|DIRP|--test-type DIRP|
+|--reference|Reference protein for DIRpred test|yes|-|--reference EGF|
+|--conservation-test|Type of conservation measure used for evolutionary alignment, can be: id, blos, jsdw|no|id|--conservation-test blos|
+|--alignment-test|Type of conservation measure used for paralogs alignment, can be: id, blos, jsdw. If not specified, will be the same as --conservation-test|no|""|--alignment-test id|
+|--coevolution-test|The measure of coevolution, can be: MI,MIp. MIp is APC corrected MI|no|MI|--coevolution-test MIp|
+|--abcd|The individual contributions for each of the 4 scores, expressed as in 1 over x. By default is 4,4,4,4 meaning 1 over 4, four times. The four scores in order are: (I)evolutionary conservation (II)paralogs conservation (III)ligand-receptor coevolution (IV) ligand internal coevolution|no|4,4,4,4|--abcd 3,3,6,6|
