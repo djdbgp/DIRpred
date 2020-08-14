@@ -1,0 +1,16 @@
+--input-file
+../testdata/input_files/egf_inputfile.txt 
+--output-path
+./
+--test-type
+DIRP
+--concon-reference
+EGF
+--conservation-test
+blos
+--alignment-test
+blos
+--coevolution-test
+MI
+--abcd
+4,4,4,4
