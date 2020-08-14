@@ -15,6 +15,7 @@ import matplotlib.cm as cm
 import matplotlib
 from scipy.stats import zscore
 import json
+
 def read_input_file(args):
     """
     this function is to parse and read the input file.
@@ -33,7 +34,7 @@ def read_input_file(args):
         return
     # read standard input file
     ligands = {}
-    ref = args.concon_reference
+    ref = args.reference
 
     with open(args.input_file) as infile:
         for line in infile:
@@ -77,7 +78,7 @@ def con_con_comparison(args):
     :param args:
     :return:
     """
-    rp = args.concon_reference          # reference ligand name
+    rp = args.reference          # reference ligand name
     prot = args.ligands[rp]             # reference ligand
     seq = prot.get_ref_seq()            # reference ligand sequence
     msta = args.msta                    # multiple structure alignment
@@ -151,7 +152,7 @@ def dir_prediction(args):
     :param args:
     :return:
     """
-    rp = args.concon_reference          # reference ligand name
+    rp = args.reference          # reference ligand name
     prot = args.ligands[rp]             # reference ligand
     seq = prot.get_ref_seq()            # reference ligand sequence
     msta = args.msta                    # multiple structure alignment
@@ -587,7 +588,7 @@ def ligand_table(args):
     :param args:
     :return:
     """
-    rp = args.concon_reference          # reference ligand name
+    rp = args.reference          # reference ligand name
     prot = args.ligands[rp]             # reference ligand
     seq = prot.get_ref_seq()            # reference ligand sequence
     msta = args.msta                    # multiple structure alignment
@@ -634,7 +635,7 @@ def coevol_test(args):
     :return:
     """
     # preparation
-    rp = args.concon_reference          # reference ligand name
+    rp = args.reference          # reference ligand name
     prot = args.ligands[rp]             # reference ligand
     seq = prot.get_ref_seq()            # reference sequence
     receptor = args.receptor            # receptor MSA
@@ -827,8 +828,8 @@ def pca_test(args):
         plt.clf()
 
     # do it for both MSA and MSTA
-    run_pca(tot_df, args.concon_reference, "MSA", args.output_path)
-    run_pca(tot_df, args.concon_reference, "MSTA", args.output_path)
+    run_pca(tot_df, args.reference, "MSA", args.output_path)
+    run_pca(tot_df, args.reference, "MSTA", args.output_path)
 
 
 def main(argv):
@@ -839,13 +840,10 @@ def main(argv):
     parser.add_argument("--input-file", required=True, help="input file contains all ligands with their MSA location"
                                                         "the MStA path and its format is very important, check example")
     parser.add_argument("--output-path", required=True, help="path to output folder, will be created if not ex")
-    parser.add_argument("--test-type", required=True, help="""The type of test:
-     CONCON - cross conservation graph,
-     DIRP - average multiple concon, or Divergence Inducing Residue Prediction,
-     LTABLE - ligand positions to reference table
-     COEVOL - coevolution test between ligands and receptor
-     PCA    - PCA done from the conservation scores of ligand table. needs ligtable as input""")
-    parser.add_argument("--concon-reference", default="", help="the reference protein for CONCON test.")
+    parser.add_argument("--test-type", default="DIRP", help="""The type of test:
+     DIRP - average multiple concon, or Divergence Inducing Residue Prediction
+     """)
+    parser.add_argument("--reference", default="", help="the reference protein for DIRpred test.")
     parser.add_argument("--conservation-test", default="id", help="""type of conservation measure:"
      id - identity
      blos - blosum62
@@ -853,7 +851,7 @@ def main(argv):
     parser.add_argument("--alignment-test", default="", help="type of conservation measure, used for alignment. By default, like conservation_test")
     parser.add_argument("--coevolution-test", default="MI",
                         help="coevolution measure. By default, MI: mutual information. can be MIp, APC corrected MI")
-    parser.add_argument("--abcd", default="", help="the individual contributions for each score, as in 1 over x, by defaultis: 4,4,4,4. meaning 1 over 4, four times.")
+    parser.add_argument("--abcd", default="4,4,4,4", help="the individual contributions for each score, as in 1 over x, by defaultis: 4,4,4,4. meaning 1 over 4, four times.")
     args = parser.parse_args()
 
     # CREATE LOG DETAILS

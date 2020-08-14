@@ -1,6 +1,6 @@
 # example file for input preparation of DIRpred pipeline
 # file is tab separated list of inputs, with the following columns
-# 1 - type: can be LIGAND, MSTA, MSA
+# 1 - type: can be LIGAND, MSTA, MSA, RECEPTOR
 # 2 - path: the PATH to the file
 # 3 - name: the NAME of LIGAND
 # 4 - pdb: the PDB ID of LIGAND

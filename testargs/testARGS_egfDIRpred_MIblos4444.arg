@@ -4,7 +4,7 @@
 ./test_out/
 --test-type
 DIRP
---concon-reference
+--reference
 EGF
 --conservation-test
 blos
