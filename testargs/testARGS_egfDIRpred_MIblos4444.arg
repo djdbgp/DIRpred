@@ -1,7 +1,7 @@
 --input-file
-../testdata/input_files/egf_inputfile.txt 
+../testdata/input_files/egf_inputfile.txt
 --output-path
-./
+./test_out/
 --test-type
 DIRP
 --concon-reference

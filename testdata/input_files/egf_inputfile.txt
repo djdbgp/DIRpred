@@ -5,13 +5,13 @@
 # 3 - name: the NAME of LIGAND
 # 4 - pdb: the PDB ID of LIGAND
 #
-LIGAND	../alignments/ensembl_AREG_orthologues_prot.fa	AREG	2rnl
-LIGAND	../alignments/ensembl_BTC_orthologues_prot.fa	BTC	1ip0
-LIGAND	../alignments/ensembl_EPGN_orthologues_prot.fa	EPGN	5wb8
-LIGAND	../alignments/ensembl_EREG_orthologues_prot.fa	EREG	5wb7
-LIGAND	../alignments/ensembl_HBEGF_orthologues_prot.fa	HBEGF	1mox
-LIGAND	../alignments/ensembl_orthologues_egf_protein.fa	EGF	1ivo
-LIGAND	../alignments/ensembl_TGFA_orthologues_prot.fa	TGFA	1xdt
-MSTA	../alignments/MStA_ligands_scary.fasta
-MSA	../alignments/ligands_msa.fa
-RECEPTOR	EGFR	../alignments/ensembl_orthologues_egfr_protein.fa
+LIGAND	../testdata/alignments/ensembl_AREG_orthologues_prot.fa	AREG	2rnl
+LIGAND	../testdata/alignments/ensembl_BTC_orthologues_prot.fa	BTC	1ip0
+LIGAND	../testdata/alignments/ensembl_EPGN_orthologues_prot.fa	EPGN	5wb8
+LIGAND	../testdata/alignments/ensembl_EREG_orthologues_prot.fa	EREG	5wb7
+LIGAND	../testdata/alignments/ensembl_HBEGF_orthologues_prot.fa	HBEGF	1mox
+LIGAND	../testdata/alignments/ensembl_orthologues_egf_protein.fa	EGF	1ivo
+LIGAND	../testdata/alignments/ensembl_TGFA_orthologues_prot.fa	TGFA	1xdt
+MSTA	../testdata/alignments/MStA_ligands_scary.fasta
+MSA	../testdata/alignments/ligands_msa.fa
+RECEPTOR	EGFR	../testdata/alignments/ensembl_orthologues_egfr_protein.fa
