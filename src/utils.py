@@ -1,15 +1,30 @@
-# selection of classes for double conservation script
+# selection of classes for DIRpred script
+# content summary:
+# 1. def make_blos62_mp: marginal probabilities of BLOSUM62 matrix, from capra (et al.) python code
+# 2. class ConScores: class containing the conservation scores scoring methods, they all input MSA and reference, output an array based on ref positions
+# 3. class Protein: mother class for Ligand and Receptor
+# 4. class Ligand: represents and collects info of one of the paralog ligands.
+# 5. class Receptor: represents and collects info of the receptor
+# 6. class MSA: class representing a multiple sequence/structure alignment, with useful functions. (also used for MSTA)
+# 7. def create_msa: creates a msa pandas dataframe from an open fasta file f
+# 8. def mutual_info: from an array of coupled positions, returns MI score
+# 9. def plot_coevol: small plot function for coevolution data
+# 10. def pseudobond_top5: from the coevolution data frame, creates a file that could be run with chimera to generate pseudo bonds
+# 11. def get_pos_converter_dic: converts positions from reference to msa evo
+# 12. def get_msa_dic: ???
+# 13. def all_ligands_coevol: join the orthologs MSA of all the paralogs and calculate the internal coevolution score (I suppose)
+# 14. def all_ligands_receptor_coevol: calculates the coevolution of all the ligands with the receptor
+# 15. def intra_coevol: calculates a protein internal coevolution
+# 16. def inter_coevol: calculates two proteins coevolution
+# 17. def correct_apc: function to modify MI matrix to correct for the APC
 
-import re
 from Bio import SeqIO
 from Bio.SubsMat.MatrixInfo import blosum62
 import pandas as pd
 import numpy as np
 from collections import Counter
-import matplotlib
 import matplotlib.pyplot as plt
 import seaborn as sb
-import random
 
 
 def make_blos62_mp():
@@ -18,6 +33,7 @@ def make_blos62_mp():
           0.059, 0.055, 0.014, 0.034, 0.072]
     aa = ['A', 'R', 'N', 'D', 'C', 'Q', 'E', 'G', 'H', 'I', 'L', 'K', 'M', 'F', 'P', 'S', 'T', 'W', 'Y', 'V']
     return {aa[i]: sc[i] for i in range(len(sc))}
+
 
 class ConScores:
     """
@@ -30,29 +46,6 @@ class ConScores:
     # general variab
 
     blos62_mp = make_blos62_mp()
-
-
-    #
-    # old_blos62_mp = {'A': 0.074,
-    #              'C': 0.025,
-    #              'D': 0.054,
-    #              'E': 0.054,
-    #              'F': 0.047,
-    #              'G': 0.074,
-    #              'H': 0.026,
-    #              'I': 0.068,
-    #              'K': 0.058,
-    #              'L': 0.099,
-    #              'M': 0.025,
-    #              'N': 0.045,
-    #              'P': 0.039,
-    #              'Q': 0.034,
-    #              'R': 0.052,
-    #              'S': 0.057,
-    #              'T': 0.051,
-    #              'V': 0.073,
-    #              'W': 0.013,
-    #              'Y': 0.032}
 
     # scoring methods
 
@@ -302,46 +295,22 @@ class ConScores:
         # print("\t".join([str(x) for x in out]))
         return out
 
-
-    @staticmethod
-    def weird_freq_test(msa, ref):
-        # print(reslist)
-        # print(ptrans(reslist,blosum62))
-        # print(blosum62)
-        # print("\n".join(["{} => {:.2f}".format(x[0], (2**x[1])* fd.get(x[0][0],10**-7)*fd.get(x[0][1],10**-7) ) for x in blosum62.items()]))
-        # print(len(set([x[0] for x in blosum62.keys()])))
-        allowed = set([x[0] for x in m.keys()])
-        p = 1
-        tot_len = len(l)
-        l = [x for x in l if x in allowed]
-        if len(l) == 0:
-            return 0
-        for res_outer in l:
-            outer_prob = 0
-            for res_inner in l:
-                outer_prob += blosum62[(res_inner, res_outer)]
-            outer_prob -= blosum62[(res_outer, res_outer)]  # because he considered himself once
-
     scoresdict = {
         "id": identity.__func__,
         "blos": blosum.__func__,
         "jsdw": JSDw.__func__
     }
 
+
 class Protein(object):
 
     def __init__(self):
 
         # meta attrib
-        #self._msa_cons_scores = None
+
         self.msa_cons_scores = None
-
-        #self._prot_msa = None
         self.prot_msa = None
-
-        # reference
         self.reference = ""
-        # name
         self.name = ""
 
     # PROPERTY CLASSES
@@ -454,7 +423,6 @@ class Protein(object):
                 out.append(i)
         return out
 
-
     def get_ref_seq(self):
         """
         returns ref seq excluding gaps
@@ -530,7 +498,7 @@ class Ligand(Protein):
 class Receptor(Protein):
     """
     attribs:
-    name        -   the gene name of the ligand
+    name        -   the gene name of the receptor
     description -   the description of msa type
     uprot       -   the uniprot ID of the ligand
     affinity    -   the degree of affinity (high,low)
@@ -847,10 +815,6 @@ class MSA(object):
         ref_pos = self.get_referenced_positions(name)  # msa positions in reference len array
 
         msa2evo = self.msa_to_evo_reference(prot)
-        # print(msa2evo)
-        # print(len(score_arr))
-        # print(score_arr)
-        # print(ref_pos[0], ref_pos[-1])
 
         # initialize ref length array
         out = ["-"] * len(ref_pos)

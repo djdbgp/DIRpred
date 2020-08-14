@@ -8,13 +8,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sb
 import numpy as np
-from matplotlib.ticker import FormatStrFormatter
-from sklearn.preprocessing import StandardScaler
-from sklearn.decomposition import PCA as sklearnPCA
-import matplotlib.cm as cm
 import matplotlib
-from scipy.stats import zscore
 import json
+
+# good luck~
 
 def read_input_file(args):
     """
@@ -29,9 +26,7 @@ def read_input_file(args):
     :param args:
     :return:
     """
-    # PCA has different input type
-    if args.test_type == "PCA":
-        return
+
     # read standard input file
     ligands = {}
     ref = args.reference
@@ -71,78 +66,6 @@ def read_input_file(args):
         # add ligands
         args.ligands = ligands
 
-def con_con_comparison(args):
-    """
-    cross conservation comparison
-
-    :param args:
-    :return:
-    """
-    rp = args.reference          # reference ligand name
-    prot = args.ligands[rp]             # reference ligand
-    seq = prot.get_ref_seq()            # reference ligand sequence
-    msta = args.msta                    # multiple structure alignment
-    msa = args.msa                      # multiple sequence alignment
-    contest = args.conservation_test    # conservation test type
-    algtest = args.alignment_test       # conservation for ligand alignment type
-
-    # data preparation
-    cs = pd.DataFrame()
-    # add separating variable when it is 7 lumps of data
-    sepvar = 0
-    if algtest == "id":
-        sepvar = 0.04
-    cs["MSA"] = [round(x, 2) + sepvar for x in msa.get_cons_scores(algtest)]
-    cs["MSTA"] = [round(x, 2) - sepvar for x in msta.get_cons_scores(algtest)]
-    cs[prot.name] = prot.get_cons_scores(contest)
-    cs.insert(0, 'POS', [str(x) + seq[x - 1] for x in range(1, 1 + len(cs))])
-
-    # plotting
-    fig, ax = plt.subplots()
-    fig.set_size_inches(11.7, 8.27)  # A4 size
-
-    def plotter(fig, ax, alg_label, marker, pname):
-
-        # colormap
-        cmap = matplotlib.cm.get_cmap('coolwarm')
-        normalize = matplotlib.colors.Normalize(vmin=0, vmax=len(cs[alg_label]))
-        colors = [cmap(normalize(value)) for value in range(len(cs[alg_label]))]
-
-        #scatter plot
-        sb.regplot(alg_label, pname, cs, scatter=True, fit_reg=False, ax=ax, label=alg_label, marker=marker, scatter_kws={"color":colors})
-
-    plotter(fig, ax, "MSA", 'd', prot.name)
-    plotter(fig, ax, "MSTA", 's', prot.name)
-
-    # labels
-    plt.ylabel("Evolutionary Conservation")
-    plt.xlabel("Ligands Alignments Conservation")
-    plt.legend(loc=4)
-
-    # # colorbar
-    cmap = matplotlib.cm.get_cmap('coolwarm')
-    normalize = matplotlib.colors.Normalize(vmin=0, vmax=len(cs["MSA"]))
-    cax, _ = matplotlib.colorbar.make_axes(ax, orientation="horizontal", aspect=50)
-    cbar = matplotlib.colorbar.ColorbarBase(cax, cmap=cmap, norm=normalize, orientation="horizontal")
-    plt.xlabel("AA position")
-
-    # plot diagonal line
-    lims = [
-        np.min([ax.get_xlim(), ax.get_ylim()]),
-        np.max([ax.get_xlim(), ax.get_ylim()]),
-        ]
-    ax.plot(lims, lims, ls="--", c=".3")
-    # in case it is 7 lumps of X axis
-    if algtest == "id":  # it is 7 blocks
-        ax.xaxis.set_major_formatter(FormatStrFormatter('%.2f'))  # float representation to 2 decimals
-        ax.bar(np.arange(0, 1.01, 1 / 6), [ax.get_ylim()[1]] * 7, width=[0.15] * 7, color="grey", alpha=0.3)  # backgroun bars
-        plt.xticks(np.arange(0, 1.01, 1 / 6))  # ligands xticks
-
-    # saving
-    plt.savefig("{}/{}concon.png".format(args.output_path, prot.name), format='png', dpi=800)
-    # save text output also
-    with open("{}/{}concon.csv".format(args.output_path, prot.name), "w") as outfile:
-        cs.to_csv(outfile)
 
 def dir_prediction(args):
     """
@@ -169,8 +92,6 @@ def dir_prediction(args):
     # ligands alignment scorings
     cs["MSA"] = [round(x, 2) for x in msa.get_cons_scores(algtest)]
     cs["MSTA"] = [round(x, 2) for x in msta.get_cons_scores(algtest)]
-    # cs[prot.name] = prot.get_cons_scores(contest)
-    # evolutionary alignment average scoring
     # now I need one evo cons from MSA alignment average and one from MSTA alignment average
     relative_conservation = ligand_table(args)
     cs["EVO cons MSA"] = average_score(relative_conservation,"MSA")
@@ -191,9 +112,7 @@ def dir_prediction(args):
     # get the values of abcd:
     abcd = [1/int(x) for x in args.abcd.split(",")]
     # average MSA/MSTA then distance with
-
     avg_dirp, part_scores = calculate_dirp_score(cs,args.msa_cols,args.msta_cols, abcd)
-
     cs["avg DIR score"] = avg_dirp
     cs["partial scores"] = part_scores
 
@@ -321,13 +240,6 @@ def makeplots(cs, args):
     with open("{}/DIRpred_sorted.csv".format(args.output_path), "w") as outfile:
         sorted_cs.to_csv(outfile)
 
-def calculate_dirp_score_old(df, msa_id=["MSA","EVO cons MSA"], msta_id=["MSTA","EVO cons MSTA"]):
-    """average msa and msta score (distance from diagonal) v0.1"""
-
-    diag = lambda x,y: np.abs(x-y) * np.sqrt(2) / 2
-    MSA_score = diag(df[msa_id[0]],df[msa_id[1]])
-    MSTA_score = diag(df[msta_id[0]],df[msta_id[1]])
-    return np.mean([MSA_score, MSTA_score], axis=0)
 
 def calculate_dirp_score(df, msa_ids, msta_ids, abcd=(0.25,0.25,0.25,0.25)):
     """sum method, v1.0
@@ -362,216 +274,6 @@ def calculate_dirp_score(df, msa_ids, msta_ids, abcd=(0.25,0.25,0.25,0.25)):
 
     return np.mean([MSA_score, MSTA_score], axis=0).round(2), partial_score
 
-def calculate_dirp_score_double_diag(df, msa_ids, msta_ids, abcd=(0.25,0.25,0.25,0.25)):
-    """sum method, v1.0
-    the 4 scores are
-    I: avg evolutionary conservation (positive)
-    II: ligands alignment conservation (negative)
-    III: avg ligand-receptor max coevolution (positive)
-    IV: avg ligand-ligand max coevolution (negative)
-
-    the 4 scores will be divided in 2 groups, conservation and coevolution
-    then the distance from the diagonal will be taken for the two scores, normalized 0 to 0.5 and summed
-
-    returns:
-    average MSA,MSTA dirp score array = a(I) + b(1-II) + c(III) + d(1-IV)
-    partial scores array = same as before but comma instead of sum, and (MSAps,MSTAps)
-    """
-
-    a,b,c,d = abcd
-    MSA_score = []
-    MSTA_score = []
-    partial_score = []
-
-    for i,r in df.iterrows():
-        # msa
-        I,II,III,IV = list(r[msa_ids])
-        msa_partial_score = a * I, b * (1-II), c * III, d * (1 - IV)
-        MSA_score.append(((I-II)/np.sqrt(2) + (III-IV)/np.sqrt(2))/2)
-        # msta
-        I,II,III,IV = list(r[msta_ids])
-        msta_partial_score = a * I, b * (1-II), c * III, d * (1 - IV)
-        MSTA_score.append(((I-II)/np.sqrt(2) + (III-IV)/np.sqrt(2))/2)
-        partial_score.append((msa_partial_score, msta_partial_score))
-
-    return np.mean([MSA_score, MSTA_score], axis=0).round(2), partial_score
-
-def calculate_dirp_score_double(df, msa_ids, msta_ids, abcd=(0.25,0.25,0.25,0.25)):
-    """sum method, v1.0
-    the 4 scores are
-    I: avg evolutionary conservation (positive)
-    II: ligands alignment conservation (negative)
-    III: avg ligand-receptor max coevolution (positive)
-    IV: avg ligand-ligand max coevolution (negative)
-
-    the 4 scores will be weighted by a parameter each, by default 0.25, and summed to compose the final score
-
-    returns:
-    average MSA,MSTA dirp score array = a(I) * b(1-II) * c(III) * d(1-IV)
-    partial scores array = same as before but comma instead of product, and (MSAps,MSTAps)
-    """
-
-    a,b,c,d = abcd
-    MSA_score = []
-    MSTA_score = []
-    partial_score = []
-
-    for i,r in df.iterrows():
-        # msa
-        I,II,III,IV = list(r[msa_ids])
-        msa_partial_score = a * I,  b * (1 - II), c * III, d * (1 - IV)
-        MSA_score.append(msa_partial_score[0] * msa_partial_score[1] + msa_partial_score[2] * msa_partial_score[3])
-        # msta
-        I,II,III,IV = list(r[msta_ids])
-        msta_partial_score = a * I, b * (1 - II), c * III, d * (1 - IV)
-        MSTA_score.append(msta_partial_score[0] * msta_partial_score[1] + msta_partial_score[2] * msta_partial_score[3])
-        partial_score.append((msa_partial_score, msta_partial_score))
-
-    return np.mean([MSA_score, MSTA_score], axis=0).round(2), partial_score
-
-def calculate_dirp_score_z_score(df, msa_ids, msta_ids, abcd=(0.25,0.25,0.25,0.25)):
-    """sum method, v1.0
-    the 4 scores are
-    I: avg evolutionary conservation (positive)
-    II: ligands alignment conservation (negative)
-    III: avg ligand-receptor max coevolution (positive)
-    IV: avg ligand-ligand max coevolution (negative)
-
-    the 4 scores will be weighted by a parameter each, by default 0.25, and summed to compose the final score
-
-    returns:
-    average MSA,MSTA dirp score array = a(I) + b(1-II) + c(III) + d(1-IV)
-    partial scores array = same as before but comma instead of sum, and (MSAps,MSTAps)
-    """
-
-    # apply z-score
-    numeric_cols = df.select_dtypes(include=[np.number]).columns
-    z_score_df = df[numeric_cols].apply(zscore)
-    for c in z_score_df:
-        df[c] = z_score_df[c]
-    a,b,c,d = abcd
-    MSA_score = []
-    MSTA_score = []
-    partial_score = []
-
-    for i,r in df.iterrows():
-        # msa
-        I,II,III,IV = list(r[msa_ids])
-        msa_partial_score = a * I, b * (1-II), c * III, d * (1 - IV)
-        MSA_score.append(sum(msa_partial_score))
-        # msta
-        I,II,III,IV = list(r[msta_ids])
-        msta_partial_score = a * I, b * (1-II), c * III, d * (1 - IV)
-        MSTA_score.append(sum(msta_partial_score))
-        partial_score.append((msa_partial_score, msta_partial_score))
-
-    return np.mean([MSA_score, MSTA_score], axis=0).round(2), partial_score
-
-def calculate_dirp_score_quantile(df, msa_ids, msta_ids, abcd=(0.25,0.25,0.25,0.25)):
-    """sum method, v1.0
-    the 4 scores are
-    I: avg evolutionary conservation (positive)
-    II: ligands alignment conservation (negative)
-    III: avg ligand-receptor max coevolution (positive)
-    IV: avg ligand-ligand max coevolution (negative)
-
-    the 4 scores will be weighted by a parameter each, by default 0.25, and summed to compose the final score
-
-    returns:
-    average MSA,MSTA dirp score array = a(I) + b(1-II) + c(III) + d(1-IV)
-    partial scores array = same as before but comma instead of sum, and (MSAps,MSTAps)
-    """
-
-    # apply quantile
-    numeric_cols = df.select_dtypes(include=[np.number]).columns
-
-    def quantile_normalize(df):
-        """
-        input: dataframe with numerical columns
-        output: dataframe with quantile normalized values
-        """
-        df_sorted = pd.DataFrame(np.sort(df.values,
-                                         axis=0),
-                                 index=df.index,
-                                 columns=df.columns)
-        df_mean = df_sorted.mean(axis=1)
-        df_mean.index = np.arange(1, len(df_mean) + 1)
-        df_qn = df.rank(method="min").stack().astype(int).map(df_mean).unstack()
-        return (df_qn)
-
-    quantile_df = quantile_normalize(df[numeric_cols])
-
-    for c in quantile_df:
-        df[c] = quantile_df[c]
-    a,b,c,d = abcd
-    MSA_score = []
-    MSTA_score = []
-    partial_score = []
-
-    for i,r in df.iterrows():
-        # msa
-        I,II,III,IV = list(r[msa_ids])
-        msa_partial_score = a * I, b * (1-II), c * III, d * (1 - IV)
-        MSA_score.append(sum(msa_partial_score))
-        # msta
-        I,II,III,IV = list(r[msta_ids])
-        msta_partial_score = a * I, b * (1-II), c * III, d * (1 - IV)
-        MSTA_score.append(sum(msta_partial_score))
-        partial_score.append((msa_partial_score, msta_partial_score))
-
-    return np.mean([MSA_score, MSTA_score], axis=0).round(2), partial_score
-
-def calculate_dirp_score_begstats(df, msa_ids, msta_ids, abcd=(0.25,0.25,0.25,0.25)):
-    """sum method, v1.0
-    the 4 scores are
-    I: avg evolutionary conservation (positive)
-    II: ligands alignment conservation (negative)
-    III: avg ligand-receptor max coevolution (positive)
-    IV: avg ligand-ligand max coevolution (negative)
-
-    the 4 scores will be weighted by a parameter each, by default 0.25, and summed to compose the final score
-
-    returns:
-    average MSA,MSTA dirp score array = a(I) + b(1-II) + c(III) + d(1-IV)
-    partial scores array = same as before but comma instead of sum, and (MSAps,MSTAps)
-    """
-
-    # apply quantile
-    numeric_cols = df.select_dtypes(include=[np.number]).columns
-
-    def begstat_normalize(df):
-        """
-        input: dataframe with numerical columns
-        output: divide by mean score, multiply by 0.5
-        """
-        new_df = df.copy()
-        for c in df.columns:
-            new_df[c] = (df[c] - df[c].mean()) / df[c].std()
-        return new_df
-
-    begstat_df = begstat_normalize(df[numeric_cols])
-
-    for c in begstat_df:
-        df[c] = begstat_df[c]
-    a,b,c,d = abcd
-    MSA_score = []
-    MSTA_score = []
-    partial_score = []
-
-    for i,r in df.iterrows():
-        # msa
-        I,II,III,IV = list(r[msa_ids])
-        msa_partial_score = a * I, b * (1-II), c * III, d * (1 - IV)
-        MSA_score.append(sum(msa_partial_score))
-        # msta
-        I,II,III,IV = list(r[msta_ids])
-        msta_partial_score = a * I, b * (1-II), c * III, d * (1 - IV)
-        MSTA_score.append(sum(msta_partial_score))
-        partial_score.append((msa_partial_score, msta_partial_score))
-
-    return np.mean([MSA_score, MSTA_score], axis=0).round(2), partial_score
-
-
 
 def average_score(d,alg_type):
     """returns the average value from the dictionary of relative scores"""
@@ -583,8 +285,10 @@ def average_score(d,alg_type):
     mean_out = np.nanmean(l,axis=0).round(2)
     return mean_out
 
+
 def ligand_table(args):
     """
+    realigns the paralogs to a reference sequence and save the results along with the reference-aligned conservation, or sort of...
     :param args:
     :return:
     """
@@ -627,6 +331,7 @@ def ligand_table(args):
 
     return rel_cons
 
+
 def coevol_test(args):
     """
     has to return two dictionaries, intra and inter coevolution
@@ -649,10 +354,6 @@ def coevol_test(args):
 
     # receptor intra coevol
     _ = dc.intra_coevol(receptor, "{}/{}".format(coevol_output, receptor.name), coevo_test)
-    # the following was removed cause not used in coevol measure
-    # MSA - MSTA coevol
-    #dc.intra_coevol(msa, "{}/{}".format(args.output_path, msa.name), args.coevolution_test)
-    #dc.intra_coevol(msta, "{}/{}".format(args.output_path, msta.name), args.coevolution_test)
     # every ligand coevol
     # now try to combine all ligands together using msa and msta
     # all ligands
@@ -668,19 +369,13 @@ def coevol_test(args):
             logging.warning("processing {}".format(n))
             assert n in args.ligands, "{} not found in ligands list: {}".format(n, args.ligands.keys())
             this_ligand = args.ligands[n]
-            #this_ligand_intra_score = dc.intra_coevol(this_ligand, "{}/{}".format(coevol_output, this_ligand.name), coevo_test)
             this_ligand_inter_score = dc.inter_coevol(this_ligand, receptor, "{}/{}u{}intercoevo".format(coevol_output, this_ligand.name, receptor.name), coevo_test)
             this_name = "{}_{}".format(m.name, n)
-            #report_intra[this_name] = m.get_referenced_positions(n)
-#            report_intra[this_name] = lig_rc
             report_inter[this_name] = m.get_referenced_positions(n)
-            #intra_rc[this_name] = m.get_referenced_scores(n, this_ligand, this_ligand_intra_score)
-            #intra_rc[this_name] = lig_rc
             inter_rc[this_name] = m.get_referenced_scores(n, this_ligand, this_ligand_inter_score)
 
     report_intra["MSA"] = dc.intra_coevol(msa,"{}/{}".format(coevol_output, msa.name), coevo_test)
     report_intra["MSTA"] = dc.intra_coevol(msta, "{}/{}".format(coevol_output, msta.name), coevo_test)
-#    report_intra[prot.name] = dc.intra_coevol(prot, "{}/intra_{}".format(coevol_output, prot.name),
 #                                                 args.coevolution_test)
     report_inter[prot.name] = dc.inter_coevol(prot, receptor, "{}/inter_{}".format(coevol_output, prot.name), coevo_test)
     for n in intra_rc:
@@ -701,135 +396,6 @@ def coevol_test(args):
         report_inter_df.to_csv(outfile)
 
     return intra_rc, inter_rc
-
-def pca_test(args):
-    """
-    assume "POS" column is reference pos and residue string
-    assume "MSA" and "MSTA" are columns with respective conservation scores
-    in parallel, plots for MSA and MSTA
-    :param args:
-    :return:
-    """
-    assert os.path.exists(args.input_file), "You need to specify a ligand table before, consider running LTABLE test."
-    tot_df = pd.read_csv(open(args.input_file),sep="\t")
-
-    ## PCA scripts
-    def run_pca(df, ref, alg_type, out_path):
-
-        logging.warning("running PCA for {}, brace yourself".format(alg_type))
-        df_lab = df["POS"].values
-        df_cons = df[alg_type].values
-
-        df = df.filter(regex="({}_.+_cons)".format(alg_type, ref))
-        # print(df)
-        X = []
-        y = []
-        # score distribution
-        with plt.style.context('seaborn-whitegrid'):
-            plt.figure(figsize=(8, 6))
-            for lab in df.columns:
-                if "_cons_" in lab:
-                    # print(lab)
-                    this_data = ",".join(list(df[lab].astype(str))).replace("-,", "0.0,")
-                    if this_data[-1] == "-":
-                        this_data = this_data[:-1] + "0.0"
-                    this_data = [float(x) for x in this_data.split(",")]
-                    X.append(this_data)
-                    y.append(lab)
-                    plt.hist(this_data, label=lab, bins=10, alpha=0.3, )
-            plt.legend()
-        #    plt.show()
-            plt.title("{} Features score distribution".format(alg_type))
-            plt.tight_layout()
-            plt.savefig("{}{}_score_distro.svg".format(out_path, alg_type),format="svg", dpi=1200)
-        plt.clf()
-
-        # something else
-        # zero to 1
-        X_std = StandardScaler().fit_transform(np.array(X).T)
-        # transformed histogram
-        with plt.style.context('seaborn-whitegrid'):
-            plt.figure(figsize=(8, 6))
-            for i in range(len(y)):
-                plt.hist(X_std.T[i], label=y[i], bins=10, alpha=0.3, )
-
-        plt.legend()
-        # plt.show()
-        plt.title("{} Features normalized score distribution".format(alg_type))
-        plt.tight_layout()
-        plt.savefig("{}{}_norm_score_distro.svg".format(out_path, alg_type), format="svg", dpi=1200)
-        plt.clf()
-
-        sklearn_pca = sklearnPCA(n_components=2)
-        Y_sklearn = sklearn_pca.fit_transform(X_std)
-        # print(len(Y_sklearn))
-        with plt.style.context('seaborn-whitegrid'):
-            plt.figure(figsize=(6, 4))
-            plt.scatter(Y_sklearn[:, 0], Y_sklearn[:, 1], c=df_cons, cmap="viridis")
-            plt.xlabel('Principal Component 1')
-            plt.ylabel('Principal Component 2')
-
-            # add points
-            def label_point(x, y, val, ax):
-                for i in range(len(x)):
-                    ax.text(x[i], y[i], val[i], fontsize=5, color="red")
-
-            label_point(Y_sklearn[:, 0], Y_sklearn[:, 1], df_lab, plt.gca())
-
-            # plt.legend(loc='lower center')
-            # plt.show()
-            plt.title("{} Principal Component Analysis".format(alg_type))
-            plt.tight_layout()
-            plt.savefig("{}{}_PCA.svg".format(out_path, alg_type), format="svg", dpi=1200)
-        plt.clf()
-        # covariance
-        # mean_vec = np.mean(X_std)
-        # cov_mat = (X_std - mean_vec).T.dot((X_std - mean_vec)) / (X_std.shape[0]-1)
-        # print(cov_mat)
-        cov_mat = np.cov(X_std.T)
-        logging.warning('NumPy covariance matrix: \n%s' % np.cov(X_std))
-
-        # eigenvalues
-        eig_vals, eig_vecs = np.linalg.eig(cov_mat)
-        logging.warning('Eigenvectors \n%s' % eig_vecs)
-        logging.warning('\nEigenvalues \n%s' % eig_vals)
-
-        # testing dimension
-        for ev in eig_vecs:
-            np.testing.assert_array_almost_equal(1.0, np.linalg.norm(ev))
-        logging.warning('Everything ok!')
-
-        # choosing eigvect
-        # list of eig val, eig vect tuples
-        eig_pairs = [(np.abs(eig_vals[i]), eig_vecs[:, i]) for i in range(len(eig_vals))]
-        # sort
-        eig_pairs.sort(key=lambda x: x[0], reverse=True)
-
-        # visually confirm
-        logging.warning('Eigenvalues in descending order:')
-        for i in eig_pairs:
-            logging.warning(i[0])
-
-        # explained variance
-        tot = sum(eig_vals)
-        var_exp = [(i / tot) * 100 for i in sorted(eig_vals, reverse=True)]
-        cum_var_exp = np.cumsum(var_exp)
-        with plt.style.context('seaborn-whitegrid'):
-            plt.figure(figsize=(6, 4))
-            plt.bar(range(len(var_exp)), var_exp, alpha=0.5, align='center', label='individual explained variance')
-            plt.step(range(len(var_exp)), cum_var_exp, where='mid', label='cumulative explained variance')
-            plt.ylabel('Explained variance ratio')
-            plt.xlabel('Principal components')
-            plt.legend(loc='best')
-            # plt.show()
-            plt.title("{} Eigenvectors Explained Variance".format(alg_type))
-            plt.tight_layout()
-            plt.savefig("{}{}_explain_var.svg".format(out_path, alg_type), format="svg", dpi=1200)
-        plt.clf()
-
-    # do it for both MSA and MSTA
-    run_pca(tot_df, args.reference, "MSA", args.output_path)
-    run_pca(tot_df, args.reference, "MSTA", args.output_path)
 
 
 def main(argv):
@@ -878,10 +444,6 @@ def main(argv):
     # REPORT ARGS
     logging.warning("~~~~~pipeline has the following args:\n{}\n~~~~~".format(args))
 
-    # CON-CON comparison
-    if args.test_type == "CONCON":
-        con_con_comparison(args)
-
     # DIRP
     if args.test_type == "DIRP":
         dir_prediction(args)
@@ -891,10 +453,6 @@ def main(argv):
 
     if args.test_type == "LIGTAB":
         _ = ligand_table(args)
-
-    # PCA from ligand table
-    if args.test_type == "PCA":
-        pca_test(args)
 
 if __name__ == '__main__':
     main(sys.argv)
