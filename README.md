@@ -1,4 +1,5 @@
-https://zenodo.org/badge/287415954.svg
+[![DOI](https://zenodo.org/badge/287415954.svg)](https://zenodo.org/badge/latestdoi/287415954)
+
 # DIRpred
 
 Hello fellow reader. Please give the software a try with the bare minimum description that I put here.
