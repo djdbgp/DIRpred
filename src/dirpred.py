@@ -151,7 +151,7 @@ def makeplots(cs, args):
 
     # plot distributions
     g = sb.FacetGrid(df_dist, row='rows', col='type', hue='rows')
-    g = (g.map(sb.distplot, 'value', hist=False, rug=True)).set_titles("{col_name} | {row_name}")
+    g = (g.map(sb.histplot, 'value')).set_titles("{col_name} | {row_name}")
     plt.savefig("{}/scores_distribution.png".format(plot_output), dpi=400)
     plt.close()
 
