@@ -19,7 +19,9 @@
 # 17. def correct_apc: function to modify MI matrix to correct for the APC
 
 from Bio import SeqIO
-from Bio.SubsMat.MatrixInfo import blosum62
+from Bio.Align import substitution_matrices
+blosum62 = substitution_matrices.load("BLOSUM62")
+matrix = substitution_matrices.load("BLOSUM62")
 import pandas as pd
 import numpy as np
 from collections import Counter
@@ -879,7 +881,7 @@ def plot_coevol(ori_df, out_path):
     fig.set_size_inches(11.7, 8.27)  # A4 size
     labels = list(df.index)
     #mask
-    mask = np.tril(np.ones(df.shape)).astype(np.bool)
+    mask = np.tril(np.ones(df.shape)).astype(bool)
     mask = np.invert(mask)
     # plot
     hm = sb.heatmap(df, cmap='viridis', mask=mask)
